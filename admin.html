@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .api-config-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #94a3b8;
+        }
+        
+        .model-config {
+            background-color: #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .model-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #38bdf8;
+        }
+        
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .form-group input {
+            padding: 10px;
+            background-color: #475569;
+            border: 1px solid #64748b;
+            border-radius: 6px;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #38bdf8;
+            color: #0f172a;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0ea5e9;
+        }
+        
+        .btn-secondary {
+            background-color: #475569;
+            color: #f8fafc;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #64748b;
+        }
+        
+        .add-model-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .add-model-btn:hover {
+            background-color: #0ea5e9;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .message.success {
+            background-color: #166534;
+            color: #a7f3d0;
+        }
+        
+        .message.error {
+            background-color: #7f1d1d;
+            color: #fecaca;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: #1e293b;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API管理后台</h1>
+        
+        <div id="message" class="message" style="display: none;"></div>
+        
+        <div class="api-config-section">
+            <h2 class="section-title">模型API配置</h2>
+            
+            <div id="modelConfigs">
+                <!-- 模型配置将通过JS动态添加 -->
+            </div>
+            
+            <button class="add-model-btn" id="addModelBtn">添加模型配置</button>
+        </div>
+        
+        <!-- 添加模型配置弹窗 -->
+        <div class="modal" id="addModelModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">添加模型配置</h2>
+                </div>
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="newModelName">模型名称:</label>
+                        <input type="text" id="newModelName" placeholder="输入模型名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="newApiKey">API Key:</label>
+                        <input type="password" id="newApiKey" placeholder="输入API Key">
+                    </div>
+                    <div class="form-group">
+                        <label for="newApiUrl">API URL:</label>
+                        <input type="text" id="newApiUrl" placeholder="输入API URL">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" id="cancelAddModelBtn">取消</button>
+                        <button class="btn btn-primary" id="confirmAddModelBtn">确认添加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="api-config-section">
+            <h2 class="section-title">功能模型映射配置</h2>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 15px;">配置不同功能使用的AI模型</p>
+            
+            <div id="featureModelConfigs">
+                <!-- 功能模型映射配置将通过JS动态添加 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 存储模型配置
+        let modelConfigs = [];
+        let featureModelMappings = [];
+        
+        // 初始化页面
+        async function init() {
+            await loadConfigs();
+            await loadFeatureModelMappings();
+            renderModelConfigs();
+            renderFeatureModelConfigs();
+            bindEvents();
+        }
+        
+        // 从后端加载配置
+        async function loadConfigs() {
+            try {
+                const response = await fetch('http://localhost:8888/api/model-configs?user_id=global');
+                if (response.ok) {
+                    const data = await response.json();
+                    modelConfigs = data.models || [];
+                } else if (response.status === 429) {
+                    showMessage('请求过于频繁，请稍后再试', 'error');
+                } else {
+                    showMessage('加载配置失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                showMessage('加载配置失败', 'error');
+            }
+        }
+        
+        // 从后端加载功能模型映射配置
+        async function loadFeatureModelMappings() {
+            try {
+                const response = await fetch('http://localhost:8888/api/feature-model-mappings?user_id=global');
+                if (response.ok) {
+                    const data = await response.json();
+                    featureModelMappings = data.mappings || [];
+                }
+            } catch (error) {
+                console.error('加载功能模型映射配置失败:', error);
+            }
+        }
+        
+        // 渲染模型配置
+        function renderModelConfigs() {
+            const container = document.getElementById('modelConfigs');
+            container.innerHTML = '';
+            
+            modelConfigs.forEach(config => {
+                const configDiv = document.createElement('div');
+                configDiv.className = 'model-config';
+                configDiv.innerHTML = `
+                    <div class="model-header">
+                        <span class="model-name">${config.name} ${config.isGlobal ? '(全局)' : ''}</span>
+                        <button class="btn btn-secondary" onclick="deleteModel(${config.id})">删除</button>
+                    </div>
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label for="modelName-${config.id}">模型名称:</label>
+                            <input type="text" id="modelName-${config.id}" value="${config.name}" placeholder="输入模型名称">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiKey-${config.id}">API Key:</label>
+                            <input type="password" id="apiKey-${config.id}" value="${config.apiKey || ''}" placeholder="输入API Key">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiUrl-${config.id}">API URL:</label>
+                            <input type="text" id="apiUrl-${config.id}" value="${config.apiUrl || ''}" placeholder="输入API URL">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="saveModel(${config.id})")">保存</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(configDiv);
+            });
+        }
+        
+        // 渲染功能模型映射配置
+        function renderFeatureModelConfigs() {
+            const container = document.getElementById('featureModelConfigs');
+            container.innerHTML = '';
+            
+            // 定义可用的功能列表
+            const features = [
+                { name: 'chat_title', label: '对话标题生成', description: '根据对话内容自动生成对话标题' }
+            ];
+            
+            features.forEach(feature => {
+                // 查找当前功能的映射配置
+                const mapping = featureModelMappings.find(m => m.feature_name === feature.name);
+                const currentModel = mapping ? mapping.model_name : '';
+                
+                const configDiv = document.createElement('div');
+                configDiv.className = 'model-config';
+                configDiv.innerHTML = `
+                    <div class="model-header">
+                        <span class="model-name">${feature.label}</span>
+                        <span style="color: #94a3b8; font-size: 12px;">${feature.description}</span>
+                    </div>
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label for="featureModel-${feature.name}">选择模型:</label>
+                            <select id="featureModel-${feature.name}" style="padding: 10px; background-color: #475569; border: 1px solid #64748b; border-radius: 6px; color: #f8fafc; font-size: 14px; width: 100%;">
+                                <option value="">-- 请选择模型 --</option>
+                                ${modelConfigs.map(config => `
+                                    <option value="${config.name}" ${config.name === currentModel ? 'selected' : ''}>
+                                        ${config.name} ${config.isGlobal ? '(全局)' : ''}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="saveFeatureModelMapping('${feature.name}')">保存</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(configDiv);
+            });
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            document.getElementById('addModelBtn').addEventListener('click', addModel);
+            document.getElementById('cancelAddModelBtn').addEventListener('click', closeAddModelModal);
+            document.getElementById('confirmAddModelBtn').addEventListener('click', confirmAddModel);
+        }
+        
+        // 添加模型
+        async function addModel() {
+            document.getElementById('addModelModal').style.display = 'block';
+        }
+        
+        // 确认添加模型
+        async function confirmAddModel() {
+            try {
+                const name = document.getElementById('newModelName').value;
+                const apiKey = document.getElementById('newApiKey').value;
+                const apiUrl = document.getElementById('newApiUrl').value;
+                
+                if (!name || !apiKey || !apiUrl) {
+                    showMessage('请填写完整的模型信息', 'error');
+                    return;
+                }
+                
+                const newModel = {
+                    name: name,
+                    apiKey: apiKey,
+                    apiUrl: apiUrl
+                };
+                
+                const response = await fetch('http://localhost:8888/api/model-configs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: newModel.name,
+                        apiKey: newModel.apiKey,
+                        apiUrl: newModel.apiUrl,
+                        userId: 'global'
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    newModel.id = result.model.id;
+                    modelConfigs.push(newModel);
+                    renderModelConfigs();
+                    showMessage('模型配置已添加', 'success');
+                    closeAddModelModal();
+                } else if (response.status === 429) {
+                    showMessage('请求过于频繁，请稍后再试', 'error');
+                } else {
+                    const error = await response.json();
+                    showMessage('添加配置失败: ' + (error.detail || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('添加配置失败:', error);
+                showMessage('添加配置失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 关闭添加模型模态框
+        function closeAddModelModal() {
+            document.getElementById('addModelModal').style.display = 'none';
+            document.getElementById('newModelName').value = '';
+            document.getElementById('newApiKey').value = '';
+            document.getElementById('newApiUrl').value = '';
+        }
+        
+        // 删除模型
+        async function deleteModel(id) {
+            try {
+                if (!confirm('确定要删除这个模型配置吗？')) {
+                    return;
+                }
+                
+                const response = await fetch(`http://localhost:8888/api/model-configs/${id}?user_id=global`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    modelConfigs = modelConfigs.filter(config => config.id !== id);
+                    renderModelConfigs();
+                    showMessage('模型配置已删除', 'success');
+                } else if (response.status === 429) {
+                    showMessage('请求过于频繁，请稍后再试', 'error');
+                } else {
+                    const error = await response.json();
+                    showMessage('删除配置失败: ' + (error.detail || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('删除配置失败:', error);
+                showMessage('删除配置失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 保存模型配置
+        async function saveModel(id) {
+            const config = modelConfigs.find(c => c.id === id);
+            if (config) {
+                config.name = document.getElementById(`modelName-${id}`).value;
+                config.apiKey = document.getElementById(`apiKey-${id}`).value;
+                config.apiUrl = document.getElementById(`apiUrl-${id}`).value;
+                
+                try {
+                    const response = await fetch(`http://localhost:8888/api/model-configs/${config.id}?user_id=global`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: config.name,
+                            apiKey: config.apiKey,
+                            apiUrl: config.apiUrl
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        showMessage('模型配置已保存', 'success');
+                    } else if (response.status === 429) {
+                        showMessage('请求过于频繁，请稍后再试', 'error');
+                    } else {
+                        const error = await response.json();
+                        showMessage('保存配置失败: ' + (error.detail || '未知错误'), 'error');
+                    }
+                } catch (error) {
+                    console.error('保存配置失败:', error);
+                    showMessage('保存配置失败: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // 保存功能模型映射
+        async function saveFeatureModelMapping(featureName) {
+            const selectEl = document.getElementById(`featureModel-${featureName}`);
+            const modelName = selectEl.value;
+            
+            if (!modelName) {
+                showMessage('请选择一个模型', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8888/api/feature-model-mappings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        feature_name: featureName,
+                        model_name: modelName,
+                        user_id: 'global'
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('功能模型映射已保存', 'success');
+                    // 刷新映射列表
+                    await loadFeatureModelMappings();
+                    renderFeatureModelConfigs();
+                } else {
+                    const error = await response.json();
+                    showMessage('保存失败: ' + (error.detail || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('保存功能模型映射失败:', error);
+                showMessage('保存失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 显示消息
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
